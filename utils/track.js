@@ -1,11 +1,6 @@
-const DASHBOARD_API = 'https://base-dashboard-zeta.vercel.app/api/track'
+export const DASHBOARD_API = 'https://base-dashboard-zeta.vercel.app/api/track'
 
-export async function trackTransaction(
-  appId: string,
-  appName: string,
-  userAddress: string | undefined,
-  txHash: string
-) {
+export async function trackTransaction(appId, appName, userAddress, txHash) {
   try {
     await fetch(DASHBOARD_API, {
       method: 'POST',
@@ -18,7 +13,7 @@ export async function trackTransaction(
         timestamp: new Date().toISOString(),
       }),
     })
-  } catch {
-    // Silent fail
+  } catch (error) {
+    console.error('trackTransaction failed', error)
   }
 }
