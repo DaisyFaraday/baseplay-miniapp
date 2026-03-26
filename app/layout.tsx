@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
 import { Toaster } from 'react-hot-toast'
+import { APP_NAME, BASE_APP_ID, PROJECT_VERIFICATION, SITE_URL } from '@/lib/appConfig'
 import './globals.css'
 import Providers from './providers'
 
-const siteUrl = 'https://baseplay-miniapp.vercel.app'
-
 export const metadata: Metadata = {
-  title: 'BasePlay',
-  description: 'A Base mini app for creating pools, betting, and claiming rewards.',
-  metadataBase: new URL(siteUrl),
+  title: APP_NAME,
+  description: 'BasePlay is a live onchain betting desk for Base Mini App users.',
+  metadataBase: new URL(SITE_URL),
   openGraph: {
-    title: 'BasePlay',
-    description: 'A Base mini app for creating pools, betting, and claiming rewards.',
-    url: siteUrl,
+    title: APP_NAME,
+    description:
+      'Create pools, bet with ETH or ERC20, submit results, claim rewards, and read live odds on Base.',
+    url: SITE_URL,
     images: ['/og.png'],
   },
   icons: {
@@ -26,18 +26,23 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <head>
-        <meta name="base:app_id" content="69c0b55d3beb94a927e63d55" />
+        <meta name="base:app_id" content={BASE_APP_ID} />
         <meta
           name="talentapp:project_verification"
-          content="4a7fa9b0d878fcc46a71871a111b21cadbbb0f420867fb883105a57d0e39cf183bf1ff06ba079dbd84a8a61e9795e4ebfd7b9203fcba763ca57c378d758aaa97"
+          content={PROJECT_VERIFICATION}
         />
       </head>
       <body>
         <Providers>
           {children}
-          <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 4000,
+            }}
+          />
         </Providers>
       </body>
     </html>
