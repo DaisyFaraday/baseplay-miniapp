@@ -39,6 +39,7 @@ import {
 type TxKind = 'createPool' | 'approve' | 'bet' | 'submitResult' | 'claim' | null
 
 type PoolView = {
+  id: bigint
   pool: PoolShape
   odds: OddsShape
   bet: {
@@ -50,6 +51,13 @@ type PoolView = {
     decimals: number
     symbol: string
   }
+}
+
+type QueuedBet = {
+  poolId: bigint
+  side: boolean
+  amount: bigint
+  nativeToken: boolean
 }
 
 function ConnectPanel() {
@@ -123,12 +131,89 @@ function ConnectPanel() {
   )
 }
 
+function PoolSnapshotCard({
+  poolView,
+  onUse,
+  onOdds,
+}: {
+  poolView: PoolView
+  onUse: (poolId: bigint) => void
+  onOdds: (poolId: bigint) => void
+}) {
+  const { id, pool, odds, tokenMeta, bet } = poolView
+  const statusLabel =
+    pool.result !== 0
+      ? 'Settled'
+      : BigInt(Math.floor(Date.now() / 1000)) >= pool.endTime
+        ? 'Ended'
+        : 'Open'
+
+  return (
+    <article className="pool-list-card">
+      <div className="pool-list-top">
+        <div>
+          <span className="micro-kicker">Pool #{id.toString()}</span>
+          <h3>{isNativeToken(pool.token) ? 'ETH Market' : `${tokenMeta.symbol} Market`}</h3>
+        </div>
+        <span className={`mini-status mini-status-${statusLabel.toLowerCase()}`}>{statusLabel}</span>
+      </div>
+
+      <div className="pool-list-grid">
+        <div>
+          <span>Ends</span>
+          <strong>{formatDateTime(pool.endTime)}</strong>
+        </div>
+        <div>
+          <span>Result</span>
+          <strong>{pool.result === 0 ? 'Pending' : `Side ${pool.result}`}</strong>
+        </div>
+        <div>
+          <span>Side A</span>
+          <strong>{formatTokenAmount(pool.totalSideA, tokenMeta.decimals, tokenMeta.symbol)}</strong>
+        </div>
+        <div>
+          <span>Side B</span>
+          <strong>{formatTokenAmount(pool.totalSideB, tokenMeta.decimals, tokenMeta.symbol)}</strong>
+        </div>
+        <div>
+          <span>Odds</span>
+          <strong>
+            {formatOddsValue(odds.sideAOdds)} / {formatOddsValue(odds.sideBOdds)}
+          </strong>
+        </div>
+        <div>
+          <span>Your Bet</span>
+          <strong>
+            {bet && bet.amount > 0n
+              ? `${bet.side ? 'Side A' : 'Side B'} · ${formatTokenAmount(
+                  bet.amount,
+                  tokenMeta.decimals,
+                  tokenMeta.symbol
+                )}`
+              : 'No bet yet'}
+          </strong>
+        </div>
+      </div>
+
+      <div className="quick-actions">
+        <button className="button button-secondary" onClick={() => onUse(id)} type="button">
+          Use This Pool
+        </button>
+        <button className="button button-secondary" onClick={() => onOdds(id)} type="button">
+          View Odds
+        </button>
+      </div>
+    </article>
+  )
+}
+
 export default function BasePlayDesk() {
   const publicClient = usePublicClient({ chainId: base.id })
   const { address, chainId, isConnected } = useAccount()
   const canTransact = Boolean(isConnected && chainId === base.id)
   const [oracle, setOracle] = useState<Address | null>(null)
   const [poolCount, setPoolCount] = useState<bigint>(0n)
+  const [latestPools, setLatestPools] = useState<PoolView[]>([])
   const [inspectorId, setInspectorId] = useState('0')
   const [inspectedPool, setInspectedPool] = useState<PoolView | null>(null)
   const [inspectorLoading, setInspectorLoading] = useState(false)
@@ -142,8 +227,10 @@ export default function BasePlayDesk() {
   const [claimPoolId, setClaimPoolId] = useState('0')
   const [oddsPoolId, setOddsPoolId] = useState('0')
   const [oddsResult, setOddsResult] = useState<PoolView | null>(null)
+  const [summaryMessage, setSummaryMessage] = useState('Load a pool or use the latest market cards below.')
   const [pendingKind, setPendingKind] = useState<TxKind>(null)
   const [pendingSuccessMessage, setPendingSuccessMessage] = useState('Transaction confirmed.')
+  const [queuedBet, setQueuedBet] = useState<QueuedBet | null>(null)
   const handledHashRef = useRef<`0x${string}` | null>(null)
 
   const {
@@ -169,56 +256,61 @@ export default function BasePlayDesk() {
   useEffect(() => {
     if (!publicClient) return
 
-    void (async () => {
-      try {
-        const [nextOracle, nextCount] = await Promise.all([
-          readOracle(publicClient),
-          readPoolCount(publicClient),
-        ])
-        setOracle(nextOracle)
-        setPoolCount(nextCount)
-      } catch (error) {
-        toast.error(getFriendlyError(error))
-      }
-    })()
-  }, [publicClient])
+    void refreshDashboard()
+  }, [publicClient, address])
 
   useEffect(() => {
     if (!writeError) return
     toast.error(getFriendlyError(writeError))
     setPendingKind(null)
+    setQueuedBet(null)
   }, [writeError])
 
   useEffect(() => {
     if (!receiptError) return
     toast.error(getFriendlyError(receiptError))
     setPendingKind(null)
+    setQueuedBet(null)
   }, [receiptError])
 
   useEffect(() => {
     if (!isConfirmed || !receipt?.transactionHash) return
     if (handledHashRef.current === receipt.transactionHash) return
     handledHashRef.current = receipt.transactionHash
+
+    if (pendingKind === 'approve' && queuedBet) {
+      toast.success('Approval confirmed. Sending the bet transaction now.')
+      void submitBetFromQueue(queuedBet)
+      return
+    }
+
     toast.success(pendingSuccessMessage)
     setPendingKind(null)
     reset()
-    void refreshHeader()
+    void refreshDashboard()
     if (inspectorId) {
       void loadPool(inspectorId, false)
     }
     if (oddsPoolId) {
-      void loadOdds(oddsPoolId)
+      void loadOdds(oddsPoolId, false)
     }
-  }, [inspectorId, isConfirmed, oddsPoolId, pendingSuccessMessage, receipt, reset])
+  }, [inspectorId, isConfirmed, oddsPoolId, pendingKind, pendingSuccessMessage, queuedBet, receipt, reset])
 
-  async function refreshHeader() {
+  async function refreshDashboard() {
     if (!publicClient) return
-    const [nextOracle, nextCount] = await Promise.all([
-      readOracle(publicClient),
-      readPoolCount(publicClient),
-    ])
+    const [nextOracle, nextCount] = await Promise.all([readOracle(publicClient), readPoolCount(publicClient)])
     setOracle(nextOracle)
     setPoolCount(nextCount)
+
+    const total = Number(nextCount)
+    if (total === 0) {
+      setLatestPools([])
+      return
+    }
+
+    const ids = Array.from({ length: Math.min(total, 4) }, (_, index) => BigInt(total - 1 - index))
+    const items = await Promise.all(ids.map((id) => resolvePoolView(id)))
+    setLatestPools(items)
   }
 
   async function resolvePoolView(poolId: bigint) {
@@ -227,7 +319,7 @@ export default function BasePlayDesk() {
     const odds = await readOdds(publicClient, poolId)
     const tokenMeta = await readTokenMeta(publicClient, pool.token)
     const bet = address ? await readBet(publicClient, poolId, address) : null
-    return { pool, odds, tokenMeta, bet }
+    return { id: poolId, pool, odds, tokenMeta, bet }
   }
 
   async function loadPool(poolIdValue: string, announce = true) {
@@ -243,6 +335,7 @@ export default function BasePlayDesk() {
       }
       const poolView = await resolvePoolView(parsed)
       setInspectedPool(poolView)
+      setSummaryMessage(`Pool #${parsed.toString()} loaded. You can reuse it in the action forms below.`)
       if (announce) toast.success('Pool loaded from chain.')
     } catch (error) {
       setInspectedPool(null)
@@ -252,7 +345,7 @@ export default function BasePlayDesk() {
     }
   }
 
-  async function loadOdds(poolIdValue: string) {
+  async function loadOdds(poolIdValue: string, announce = true) {
     if (!publicClient) return
     const parsed = BigInt(poolIdValue || '0')
 
@@ -263,20 +356,55 @@ export default function BasePlayDesk() {
       }
       const poolView = await resolvePoolView(parsed)
       setOddsResult(poolView)
+      if (announce) {
+        toast.success('Live odds loaded.')
+      }
     } catch (error) {
       setOddsResult(null)
       toast.error(getFriendlyError(error))
     }
   }
 
+  async function submitBetFromQueue(nextBet: QueuedBet) {
+    setQueuedBet(null)
+    setPendingKind('bet')
+    setPendingSuccessMessage(
+      nextBet.nativeToken ? 'Native-token bet sent successfully.' : 'ERC20 bet sent successfully.'
+    )
+
+    await writeContractAsync({
+      address: CONTRACT_ADDRESS,
+      abi: BasePlayABI,
+      functionName: 'bet',
+      args: [nextBet.poolId, nextBet.side, nextBet.amount],
+      ...(nextBet.nativeToken ? { value: nextBet.amount } : {}),
+    })
+  }
+
+  function applyPoolIdEverywhere(poolId: bigint) {
+    const nextValue = poolId.toString()
+    setInspectorId(nextValue)
+    setBetPoolId(nextValue)
+    setSubmitPoolId(nextValue)
+    setClaimPoolId(nextValue)
+    setOddsPoolId(nextValue)
+  }
+
   function requireWallet() {
-    if (!isConnected || !address) throw new Error('Connect a wallet first.')
-    if (chainId !== base.id) throw new Error('Switch to Base before sending transactions.')
+    if (!isConnected || !address) {
+      toast.error('Connect a wallet first.')
+      return false
+    }
+    if (chainId !== base.id) {
+      toast.error('Switch to Base before sending transactions.')
+      return false
+    }
+    return true
   }
 
   async function handleCreatePool(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    requireWallet()
+    if (!requireWallet()) return
 
     const token = safeAddress(createToken)
     if (!token) {
@@ -302,8 +430,7 @@ export default function BasePlayDesk() {
 
   async function handleBet(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    requireWallet()
-    if (!publicClient || !address) return
+    if (!requireWallet() || !publicClient || !address) return
 
     const poolId = BigInt(betPoolId || '0')
     const count = await readPoolCount(publicClient)
@@ -336,41 +463,33 @@ export default function BasePlayDesk() {
       return
     }
 
+    const nextBet: QueuedBet = {
+      poolId,
+      side: betSide === 'true',
+      amount,
+      nativeToken,
+    }
+
     if (nativeToken) {
-      setPendingKind('bet')
-      setPendingSuccessMessage('Native-token bet sent successfully.')
-      await writeContractAsync({
-        address: CONTRACT_ADDRESS,
-        abi: BasePlayABI,
-        functionName: 'bet',
-        args: [poolId, betSide === 'true', amount],
-        value: amount,
-      })
+      await submitBetFromQueue(nextBet)
       return
     }
 
     const allowance = await readAllowance(publicClient, pool.token, address)
     if (allowance < amount) {
+      setQueuedBet(nextBet)
       setPendingKind('approve')
-      setPendingSuccessMessage('Token approval confirmed. Submit the bet again to place it onchain.')
+      setPendingSuccessMessage('Token approval confirmed.')
       await writeContractAsync(buildApproveRequest(pool.token, amount))
       return
     }
 
-    setPendingKind('bet')
-    setPendingSuccessMessage('ERC20 bet sent successfully.')
-    await writeContractAsync({
-      address: CONTRACT_ADDRESS,
-      abi: BasePlayABI,
-      functionName: 'bet',
-      args: [poolId, betSide === 'true', amount],
-    })
+    await submitBetFromQueue(nextBet)
   }
 
   async function handleSubmitResult(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    requireWallet()
-    if (!publicClient || !address) return
+    if (!requireWallet() || !publicClient || !address) return
 
     const poolId = BigInt(submitPoolId || '0')
     const count = await readPoolCount(publicClient)
@@ -409,8 +528,7 @@ export default function BasePlayDesk() {
 
   async function handleClaim(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    requireWallet()
-    if (!publicClient || !address) return
+    if (!requireWallet() || !publicClient || !address) return
 
     const poolId = BigInt(claimPoolId || '0')
     const count = await readPoolCount(publicClient)
@@ -488,6 +606,21 @@ export default function BasePlayDesk() {
               ? 'Connected wallet matches the live oracle.'
               : 'Oracle status is read from chain. No admin role is hardcoded in the UI.'}
           </div>
+
+          <div className="guide-grid">
+            <div className="guide-card">
+              <strong>1. Create</strong>
+              <p>Set an end time and token address. Use the zero address for ETH pools.</p>
+            </div>
+            <div className="guide-card">
+              <strong>2. Bet</strong>
+              <p>Pick a pool, choose Side A or Side B, and enter the amount.</p>
+            </div>
+            <div className="guide-card">
+              <strong>3. Settle & Claim</strong>
+              <p>After the market ends, the oracle submits the result and users claim.</p>
+            </div>
+          </div>
         </div>
 
         <ConnectPanel />
@@ -495,9 +628,14 @@ export default function BasePlayDesk() {
 
       <section className="content-grid">
         <section className="paper-card inspector-card">
-          <div className="panel-heading">
-            <span className="section-kicker">Pool Desk</span>
-            <h2>Inspect A Pool</h2>
+          <div className="inspector-top">
+            <div className="panel-heading">
+              <span className="section-kicker">Pool Desk</span>
+              <h2>Inspect A Pool</h2>
+            </div>
+            <button className="button button-secondary" onClick={() => void refreshDashboard()} type="button">
+              Refresh Markets
+            </button>
           </div>
           <form
             className="inline-form"
@@ -517,6 +655,8 @@ export default function BasePlayDesk() {
               {inspectorLoading ? 'Loading...' : 'Load Pool'}
             </button>
           </form>
+
+          <p className="helper-text helper-strong">{summaryMessage}</p>
 
           {inspectedPool ? (
             <div className="pool-sheet">
@@ -594,6 +734,34 @@ export default function BasePlayDesk() {
           )}
         </section>
 
+        <section className="paper-card market-board">
+          <div className="panel-heading">
+            <span className="section-kicker">Markets</span>
+            <h2>Latest Pools</h2>
+          </div>
+
+          {latestPools.length === 0 ? (
+            <p className="panel-copy">No pools have been created yet on the bound contract.</p>
+          ) : (
+            <div className="pool-list">
+              {latestPools.map((poolView) => (
+                <PoolSnapshotCard
+                  key={poolView.id.toString()}
+                  onOdds={(poolId) => {
+                    applyPoolIdEverywhere(poolId)
+                    void loadOdds(poolId.toString())
+                  }}
+                  onUse={(poolId) => {
+                    applyPoolIdEverywhere(poolId)
+                    setSummaryMessage(`Pool #${poolId.toString()} copied into the action forms below.`)
+                  }}
+                  poolView={poolView}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
         <section className="actions-grid">
           <form className="paper-card action-card" onSubmit={(event) => void handleCreatePool(event)}>
             <div className="panel-heading">
@@ -661,7 +829,7 @@ export default function BasePlayDesk() {
               />
             </label>
             <p className="helper-text">
-              ETH pools send `value = amount`. ERC20 pools check allowance and request approval first when needed.
+              ETH pools send `value = amount`. ERC20 pools auto-approve first if allowance is too low, then the bet is sent automatically.
             </p>
             <button className="button button-primary" disabled={!canTransact || isBusy} type="submit">
               {isBusy && (pendingKind === 'approve' || pendingKind === 'bet')

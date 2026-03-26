@@ -62,7 +62,9 @@ button {
 .content-grid,
 .hero-stats,
 .actions-grid,
-.stack {
+.stack,
+.guide-grid,
+.pool-list {
   display: grid;
   gap: 16px;
 }
@@ -74,6 +76,7 @@ button {
 
 .content-grid {
   margin-top: 18px;
+  gap: 18px;
 }
 
 .actions-grid {
@@ -146,9 +149,47 @@ button {
   margin-bottom: 14px;
 }
 
+.inspector-top,
+.pool-list-top,
+.quick-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.quick-actions {
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
 .hero-stats {
   margin-top: 18px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.guide-grid {
+  margin-top: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.guide-card,
+.pool-list-card {
+  border: 1px solid rgba(56, 36, 24, 0.24);
+  background: rgba(255, 250, 241, 0.72);
+  padding: 12px;
+}
+
+.guide-card strong,
+.pool-list-card h3 {
+  display: block;
+  margin: 0 0 6px;
+}
+
+.guide-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .paper-tile,
@@ -252,6 +293,12 @@ button {
   color: var(--muted);
 }
 
+.helper-strong {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+
 .text-input {
   width: 100%;
   min-height: 46px;
@@ -260,6 +307,48 @@ button {
   border-radius: 0;
   background: rgba(255, 252, 245, 0.92);
   color: var(--ink);
+}
+
+.pool-list-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pool-list-grid div {
+  display: grid;
+  gap: 4px;
+}
+
+.pool-list-grid span,
+.micro-kicker {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mini-status {
+  border: 1px solid rgba(56, 36, 24, 0.7);
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mini-status-open {
+  background: rgba(108, 140, 89, 0.18);
+}
+
+.mini-status-ended {
+  background: rgba(212, 165, 116, 0.18);
+}
+
+.mini-status-settled {
+  background: rgba(232, 98, 42, 0.16);
+}
+
+.odds-box {
+  margin-top: 12px;
 }
 
 .pool-sheet {
@@ -286,7 +375,8 @@ button {
 
 @media (max-width: 960px) {
   .hero-grid,
-  .actions-grid {
+  .actions-grid,
+  .guide-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -308,8 +398,17 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .pool-list-grid {
+    grid-template-columns: 1fr;
+  }
+
   .inline-form {
     grid-template-columns: 1fr;
+  }
+
+  .inspector-top,
+  .pool-list-top {
+    flex-direction: column;
   }
 
   .detail-row {
