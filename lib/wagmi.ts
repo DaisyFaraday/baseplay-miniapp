@@ -7,6 +7,9 @@ export const config = createConfig({
   chains: [base],
   connectors: [coinbaseWallet({ appName: APP_NAME }), injected()],
   transports: {
-    [base.id]: http(),
+    [base.id]: http('https://mainnet.base.org', {
+      batch: false,
+      timeout: 12_000,
+    }),
   },
 })

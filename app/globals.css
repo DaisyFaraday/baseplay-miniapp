@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --bg: #faf0dc;
-  --paper: rgba(255, 249, 237, 0.92);
-  --paper-strong: rgba(252, 244, 228, 0.98);
-  --ink: #2a1d12;
-  --muted: #6e5843;
-  --border: #382418;
-  --accent: #e8622a;
-  --accent-deep: #b9461a;
-  --parchment: #d4a574;
-  --shadow: 0 12px 0 rgba(56, 36, 24, 0.06), 0 18px 34px rgba(75, 48, 30, 0.12);
+  --bg: #f2ede6;
+  --paper: rgba(252, 248, 241, 0.94);
+  --paper-strong: rgba(255, 252, 247, 0.98);
+  --ink: #171513;
+  --muted: #6d6358;
+  --border: #1f1a16;
+  --accent: #b68247;
+  --accent-deep: #6c4320;
+  --parchment: #d7c1a0;
+  --shadow: 0 16px 40px rgba(24, 18, 12, 0.08);
 }
 
 * {
@@ -28,13 +28,13 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    linear-gradient(180deg, rgba(212, 165, 116, 0.18), rgba(250, 240, 220, 0.72)),
-    radial-gradient(circle at top left, rgba(232, 98, 42, 0.14), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(212, 165, 116, 0.2), transparent 24%),
+    linear-gradient(180deg, rgba(215, 193, 160, 0.26), rgba(242, 237, 230, 0.92)),
+    radial-gradient(circle at top left, rgba(182, 130, 71, 0.16), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(108, 67, 32, 0.12), transparent 22%),
     repeating-linear-gradient(
       0deg,
-      rgba(83, 56, 33, 0.016) 0,
-      rgba(83, 56, 33, 0.016) 1px,
+      rgba(48, 39, 31, 0.014) 0,
+      rgba(48, 39, 31, 0.014) 1px,
       transparent 1px,
       transparent 4px
     ),
@@ -85,9 +85,9 @@ button {
 
 .paper-card {
   position: relative;
-  border: 2px solid rgba(56, 36, 24, 0.9);
+  border: 1px solid rgba(31, 26, 22, 0.88);
   background:
-    linear-gradient(180deg, rgba(255, 250, 241, 0.92), rgba(247, 236, 214, 0.94)),
+    linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(243, 236, 226, 0.94)),
     var(--paper);
   box-shadow: var(--shadow);
 }
@@ -260,15 +260,15 @@ button {
 }
 
 .button-primary {
-  color: #fff8f0;
+  color: #fffaf4;
   background: linear-gradient(180deg, var(--accent), var(--accent-deep));
-  box-shadow: inset 0 -3px 0 rgba(66, 24, 8, 0.28);
+  box-shadow: inset 0 -3px 0 rgba(31, 18, 10, 0.28);
 }
 
 .button-secondary {
   color: var(--ink);
-  background: linear-gradient(180deg, rgba(255, 248, 236, 0.9), rgba(232, 214, 184, 0.9));
-  box-shadow: inset 0 -3px 0 rgba(56, 36, 24, 0.08);
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.94), rgba(230, 220, 205, 0.94));
+  box-shadow: inset 0 -3px 0 rgba(31, 26, 22, 0.08);
 }
 
 .inline-form,

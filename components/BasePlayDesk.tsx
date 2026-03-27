@@ -298,27 +298,52 @@ export default function BasePlayDesk() {
 
   async function refreshDashboard() {
     if (!publicClient) return
-    const [nextOracle, nextCount] = await Promise.all([readOracle(publicClient), readPoolCount(publicClient)])
-    setOracle(nextOracle)
-    setPoolCount(nextCount)
+    try {
+      const [nextOracle, nextCount] = await Promise.all([readOracle(publicClient), readPoolCount(publicClient)])
+      setOracle(nextOracle)
+      setPoolCount(nextCount)
 
-    const total = Number(nextCount)
-    if (total === 0) {
-      setLatestPools([])
-      return
+      const total = Number(nextCount)
+      if (total === 0) {
+        setLatestPools([])
+        return
+      }
+
+      const ids = Array.from({ length: Math.min(total, 2) }, (_, index) => BigInt(total - 1 - index))
+      const items: PoolView[] = []
+      for (const id of ids) {
+        items.push(await resolvePoolView(id))
+      }
+      setLatestPools(items)
+    } catch (error) {
+      toast.error(getFriendlyError(error))
     }
-
-    const ids = Array.from({ length: Math.min(total, 4) }, (_, index) => BigInt(total - 1 - index))
-    const items = await Promise.all(ids.map((id) => resolvePoolView(id)))
-    setLatestPools(items)
   }
 
   async function resolvePoolView(poolId: bigint) {
     if (!publicClient) throw new Error('Public client is not ready.')
     const pool = await readPool(publicClient, poolId)
-    const odds = await readOdds(publicClient, poolId)
-    const tokenMeta = await readTokenMeta(publicClient, pool.token)
-    const bet = address ? await readBet(publicClient, poolId, address) : null
+    let odds: OddsShape = { sideAOdds: 0n, sideBOdds: 0n }
+    let tokenMeta = {
+      decimals: 18,
+      symbol: isNativeToken(pool.token) ? 'ETH' : 'TOKEN',
+    }
+    let bet = null
+
+    try {
+      odds = await readOdds(publicClient, poolId)
+    } catch {}
+
+    try {
+      tokenMeta = await readTokenMeta(publicClient, pool.token)
+    } catch {}
+
+    if (address) {
+      try {
+        bet = await readBet(publicClient, poolId, address)
+      } catch {}
+    }
+
     return { id: poolId, pool, odds, tokenMeta, bet }
   }
 
@@ -749,11 +774,12 @@ export default function BasePlayDesk() {
                   key={poolView.id.toString()}
                   onOdds={(poolId) => {
                     applyPoolIdEverywhere(poolId)
+                    void loadPool(poolId.toString(), false)
                     void loadOdds(poolId.toString())
                   }}
                   onUse={(poolId) => {
                     applyPoolIdEverywhere(poolId)
-                    setSummaryMessage(`Pool #${poolId.toString()} copied into the action forms below.`)
+                    void loadPool(poolId.toString())
                   }}
                   poolView={poolView}
                 />

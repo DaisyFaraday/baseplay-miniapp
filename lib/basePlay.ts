@@ -1,5 +1,6 @@
 import {
   type Address,
+  decodeFunctionResult,
   encodeFunctionData,
   formatUnits,
   isAddress,
@@ -53,6 +54,8 @@ const ERC20_METADATA_ABI = [
   },
 ] as const
 
+const tokenMetaCache = new Map<string, { decimals: number; symbol: string }>()
+
 function getWord(data: `0x${string}`, index: number) {
   const start = 2 + index * 64
   return BigInt(`0x${data.slice(start, start + 64)}`)
@@ -98,19 +101,27 @@ export function toDateTimeLocalValue(date = new Date(Date.now() + 60 * 60 * 1000
 }
 
 export async function readPoolCount(client: PublicClient) {
-  return client.readContract({
-    address: CONTRACT_ADDRESS,
+  const data = encodeFunctionData({
     abi: BasePlayABI,
     functionName: 'poolCount',
   })
+  const result = await client.call({
+    to: CONTRACT_ADDRESS,
+    data,
+  })
+  return getWord(result.data as `0x${string}`, 0)
 }
 
 export async function readOracle(client: PublicClient) {
-  return client.readContract({
-    address: CONTRACT_ADDRESS,
+  const data = encodeFunctionData({
     abi: BasePlayABI,
     functionName: 'oracle',
   })
+  const result = await client.call({
+    to: CONTRACT_ADDRESS,
+    data,
+  })
+  return getAddressWord(result.data as `0x${string}`, 0)
 }
 
 export async function readPool(client: PublicClient, poolId: bigint): Promise<PoolShape> {
@@ -124,6 +135,14 @@ export async function readPool(client: PublicClient, poolId: bigint): Promise<Po
     data,
   })
   const raw = result.data as `0x${string}`
+  const words = Array.from({ length: 6 }, (_, index) => getWord(raw, index))
+  const plausibleEndTimeIndex = words.findIndex(
+    (value) => value >= 1_700_000_000n && value <= 5_000_000_000n
+  )
+  const endTimeIndex = plausibleEndTimeIndex >= 0 ? plausibleEndTimeIndex : 2
+  const tokenIndex = endTimeIndex === 2 ? 3 : 1
+  const totalAIndex = endTimeIndex === 2 ? 0 : 2
+  const totalBIndex = endTimeIndex === 2 ? 1 : 3
   const rawFlagA = getWord(raw, 4)
   const rawFlagB = getWord(raw, 5)
   const candidateA = Number(rawFlagA)
@@ -136,10 +155,10 @@ export async function readPool(client: PublicClient, poolId: bigint): Promise<Po
         : 0
 
   return {
-    endTime: getWord(raw, 0),
-    token: getAddressWord(raw, 1),
-    totalSideA: getWord(raw, 2),
-    totalSideB: getWord(raw, 3),
+    endTime: words[endTimeIndex],
+    token: getAddressWord(raw, tokenIndex),
+    totalSideA: words[totalAIndex],
+    totalSideB: words[totalBIndex],
     result: resultValue,
     settled: resultValue !== 0 || rawFlagA === 1n || rawFlagB === 1n,
     rawFlagA,
@@ -191,29 +210,56 @@ export async function readTokenMeta(client: PublicClient, token: Address) {
     return { decimals: 18, symbol: 'ETH' }
   }
 
-  const [decimals, symbol] = await Promise.all([
-    client.readContract({
-      address: token,
-      abi: ERC20_METADATA_ABI,
-      functionName: 'decimals',
-    }),
-    client.readContract({
-      address: token,
-      abi: ERC20_METADATA_ABI,
-      functionName: 'symbol',
-    }),
+  const cacheKey = token.toLowerCase()
+  const cached = tokenMetaCache.get(cacheKey)
+  if (cached) return cached
+
+  const decimalsData = encodeFunctionData({
+    abi: ERC20_METADATA_ABI,
+    functionName: 'decimals',
+  })
+  const symbolData = encodeFunctionData({
+    abi: ERC20_METADATA_ABI,
+    functionName: 'symbol',
+  })
+
+  const [decimalsRaw, symbolRaw] = await Promise.all([
+    client.call({ to: token, data: decimalsData }),
+    client.call({ to: token, data: symbolData }),
   ])
 
-  return { decimals: Number(decimals), symbol }
+  const decimals = decodeFunctionResult({
+    abi: ERC20_METADATA_ABI,
+    functionName: 'decimals',
+    data: decimalsRaw.data as `0x${string}`,
+  })
+  const symbol = decodeFunctionResult({
+    abi: ERC20_METADATA_ABI,
+    functionName: 'symbol',
+    data: symbolRaw.data as `0x${string}`,
+  })
+
+  const meta = { decimals: Number(decimals), symbol }
+  tokenMetaCache.set(cacheKey, meta)
+
+  return meta
 }
 
 export async function readAllowance(client: PublicClient, token: Address, owner: Address) {
   if (isNativeToken(token)) return 0n
-  return client.readContract({
-    address: token,
+  const data = encodeFunctionData({
     abi: ERC20_METADATA_ABI,
     functionName: 'allowance',
     args: [owner, CONTRACT_ADDRESS],
+  })
+  const result = await client.call({
+    to: token,
+    data,
+  })
+  return decodeFunctionResult({
+    abi: ERC20_METADATA_ABI,
+    functionName: 'allowance',
+    data: result.data as `0x${string}`,
   })
 }
 
