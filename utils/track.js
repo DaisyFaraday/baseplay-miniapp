@@ -13,7 +13,7 @@ export async function trackTransaction(appId, appName, userAddress, txHash) {
         timestamp: new Date().toISOString(),
       }),
     })
-  } catch (error) {
-    console.error('trackTransaction failed', error)
+  } catch (e) {
+    console.error('trackTransaction failed', e)
   }
 }

@@ -1,5 +1,5 @@
-import BasePlayDesk from '@/components/BasePlayDesk'
+import BaseQuestDesk from '@/components/BaseQuestDesk'
 
 export default function HomePage() {
-  return <BasePlayDesk />
+  return <BaseQuestDesk />
 }

@@ -6,12 +6,11 @@ import Providers from './providers'
 
 export const metadata: Metadata = {
   title: APP_NAME,
-  description: 'BasePlay is a live onchain betting desk for Base Mini App users.',
+  description: 'BaseQuest is a live onchain Merkle quest desk for Base Mini App users.',
   metadataBase: new URL(SITE_URL),
   openGraph: {
     title: APP_NAME,
-    description:
-      'Create pools, bet with ETH or ERC20, submit results, claim rewards, and read live odds on Base.',
+    description: 'Create Merkle quests, manage active state, claim with proofs, and clear points on Base.',
     url: SITE_URL,
     images: ['/og.png'],
   },
