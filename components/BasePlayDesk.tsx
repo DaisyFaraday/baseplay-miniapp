@@ -14,7 +14,7 @@ import {
 } from 'wagmi'
 import { base } from 'wagmi/chains'
 import { BasePlayABI, CONTRACT_ADDRESS, type OddsShape, type PoolShape } from '@/contracts/BasePlayABI'
-import { APP_NAME } from '@/lib/appConfig'
+import { APP_NAME, BUILDER_CODE, BUILDER_HEX } from '@/lib/appConfig'
 import {
   buildApproveRequest,
   formatAddress,
@@ -623,6 +623,14 @@ export default function BasePlayDesk() {
             <div className="paper-tile">
               <span>Pool Count</span>
               <strong>{poolCount.toString()}</strong>
+            </div>
+            <div className="paper-tile">
+              <span>Build Code</span>
+              <strong>{BUILDER_CODE}</strong>
+            </div>
+            <div className="paper-tile">
+              <span>Encoded String</span>
+              <strong>{BUILDER_HEX}</strong>
             </div>
           </div>
 
