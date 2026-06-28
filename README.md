@@ -77,3 +77,15 @@ npm install
 ```
 
 If the project uses pnpm:
+
+```bash
+pnpm install
+```
+
+If the project uses Yarn:
+
+```bash
+yarn install
+```
+
+Use the command that matches the lockfile or dependency configuration in the repository.
