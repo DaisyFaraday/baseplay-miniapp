@@ -36,3 +36,18 @@ cd baseplay-miniapp
 - Easy to extend as project requirements become clearer.
 
 ## Prerequisites
+
+Before working with the project, make sure you have the following installed:
+
+- Git
+- A compatible runtime for the project
+- The package manager or build tool used by the repository
+
+Check the project files after cloning to confirm the exact tooling.
+
+Common files to look for include:
+
+- `package.json`
+- `pnpm-lock.yaml`
+- `yarn.lock`
+- `package-lock.json`
