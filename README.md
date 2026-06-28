@@ -207,3 +207,18 @@ Confirm the actual command from the repository before relying on it.
 Deployment instructions are not currently defined in the original documentation.
 
 Before deploying, confirm:
+
+- the required runtime
+- build commands
+- output directory
+- hosting environment
+- environment configuration
+- release process
+
+Add deployment steps here once the project has a confirmed deployment target.
+
+## Maintenance Notes
+
+Keep this README updated as the project evolves.
+
+Useful details to add later include:
