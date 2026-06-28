@@ -248,3 +248,16 @@ If setup fails, try the following:
 
 - Confirm you are in the project root directory.
 - Check that the correct package manager is being used.
+- Remove installed dependencies and reinstall if needed.
+- Verify your runtime version matches the project requirements.
+- Review any error output from the development or build command.
+
+## License
+
+No license information was included in the original README.
+
+Add license details here if a license file is added to the repository.
+
+## Status
+
+This README has been expanded from the original minimal documentation to provide a clearer starting point for development.
