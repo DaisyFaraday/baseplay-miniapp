@@ -235,3 +235,16 @@ Useful details to add later include:
 ## Contributing
 
 When contributing to the project:
+
+1. Create a new branch for your change.
+2. Keep commits focused and descriptive.
+3. Verify the project still runs locally.
+4. Update documentation when behavior or setup changes.
+5. Open a pull request with a clear summary.
+
+## Troubleshooting
+
+If setup fails, try the following:
+
+- Confirm you are in the project root directory.
+- Check that the correct package manager is being used.
