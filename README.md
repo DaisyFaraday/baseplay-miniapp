@@ -63,3 +63,17 @@ git clone https://github.com/DaisyFaraday/baseplay-miniapp.git
 ```
 
 Move into the project directory:
+
+```bash
+cd baseplay-miniapp
+```
+
+Install dependencies using the package manager indicated by the project files.
+
+For example, if the project uses npm:
+
+```bash
+npm install
+```
+
+If the project uses pnpm:
