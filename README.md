@@ -103,3 +103,15 @@ npm run
 Then run the appropriate development command.
 
 Common examples include:
+
+```bash
+npm run dev
+```
+
+or:
+
+```bash
+npm start
+```
+
+Use the scripts defined in the repository rather than assuming a specific command.
