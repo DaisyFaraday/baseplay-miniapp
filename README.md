@@ -169,3 +169,15 @@ Configuration may be defined in files such as:
 - linting or formatting configuration files
 
 Do not commit local-only configuration or private values.
+
+## Testing
+
+If the project includes tests, run the test command defined by the repository.
+
+For npm-based projects, this may be:
+
+```bash
+npm test
+```
+
+If no test command is currently defined, consider adding one as the project grows.
