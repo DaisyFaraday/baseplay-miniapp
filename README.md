@@ -181,3 +181,17 @@ npm test
 ```
 
 If no test command is currently defined, consider adding one as the project grows.
+
+Recommended testing areas include:
+
+- core application behavior
+- user interface changes
+- build output
+- error handling
+- configuration changes
+
+## Building
+
+If the project includes a build step, use the build command defined in the project scripts.
+
+A common command is:
