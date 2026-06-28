@@ -143,3 +143,16 @@ git commit -m "Describe your change"
 ```
 
 ## Project Structure
+
+The exact structure should be verified from the repository contents.
+
+Common directories in mini application projects may include:
+
+- `src/` for source code
+- `public/` or `static/` for public assets
+- `components/` for reusable UI pieces
+- `pages/` or `views/` for screen-level code
+- `assets/` for images, styles, or other resources
+- configuration files in the project root
+
+Update this section as the project structure becomes more defined.
