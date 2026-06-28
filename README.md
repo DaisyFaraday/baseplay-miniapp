@@ -51,3 +51,15 @@ Common files to look for include:
 - `pnpm-lock.yaml`
 - `yarn.lock`
 - `package-lock.json`
+- build configuration files
+- framework-specific configuration files
+
+## Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/DaisyFaraday/baseplay-miniapp.git
+```
+
+Move into the project directory:
