@@ -222,3 +222,16 @@ Add deployment steps here once the project has a confirmed deployment target.
 Keep this README updated as the project evolves.
 
 Useful details to add later include:
+
+- exact runtime version
+- installation command
+- development command
+- test command
+- build command
+- deployment process
+- project architecture
+- contribution guidelines
+
+## Contributing
+
+When contributing to the project:
