@@ -195,3 +195,15 @@ Recommended testing areas include:
 If the project includes a build step, use the build command defined in the project scripts.
 
 A common command is:
+
+```bash
+npm run build
+```
+
+Confirm the actual command from the repository before relying on it.
+
+## Deployment
+
+Deployment instructions are not currently defined in the original documentation.
+
+Before deploying, confirm:
