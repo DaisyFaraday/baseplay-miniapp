@@ -24,3 +24,15 @@ Clone the project with:
 
 ```bash
 git clone https://github.com/DaisyFaraday/baseplay-miniapp.git
+cd baseplay-miniapp
+```
+
+## Features
+
+- Lightweight project structure.
+- Designed as a mini application.
+- Hosted in a public Git repository.
+- Suitable for local development and iteration.
+- Easy to extend as project requirements become clearer.
+
+## Prerequisites
