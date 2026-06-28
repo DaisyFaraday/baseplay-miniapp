@@ -156,3 +156,16 @@ Common directories in mini application projects may include:
 - configuration files in the project root
 
 Update this section as the project structure becomes more defined.
+
+## Configuration
+
+Review any configuration files included in the repository before running or deploying the project.
+
+Configuration may be defined in files such as:
+
+- environment files
+- framework configuration files
+- build configuration files
+- linting or formatting configuration files
+
+Do not commit local-only configuration or private values.
