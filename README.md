@@ -115,3 +115,17 @@ npm start
 ```
 
 Use the scripts defined in the repository rather than assuming a specific command.
+
+## Development Workflow
+
+A typical local workflow is:
+
+1. Clone the repository.
+2. Install dependencies.
+3. Review the project structure.
+4. Run the development command.
+5. Make changes in a feature branch.
+6. Test the changes locally.
+7. Commit and push updates.
+
+Example branch workflow:
