@@ -89,3 +89,17 @@ yarn install
 ```
 
 Use the command that matches the lockfile or dependency configuration in the repository.
+
+## Usage
+
+After installing dependencies, check the available project commands.
+
+If a `package.json` file is present, you can usually inspect scripts with:
+
+```bash
+npm run
+```
+
+Then run the appropriate development command.
+
+Common examples include:
