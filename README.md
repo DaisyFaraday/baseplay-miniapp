@@ -129,3 +129,17 @@ A typical local workflow is:
 7. Commit and push updates.
 
 Example branch workflow:
+
+```bash
+git checkout -b feature/your-change
+```
+
+After making changes:
+
+```bash
+git status
+git add .
+git commit -m "Describe your change"
+```
+
+## Project Structure
